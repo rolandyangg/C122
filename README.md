@@ -1,2 +1,3 @@
-project 1a
-predictions_3_3.zip = 0.73
+# CS C122 UCLA Winter 2025
+
+Roland's C122 Work.

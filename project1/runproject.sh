@@ -1,0 +1,2 @@
+# project1a.py -g project1a_reference_genome.fasta -r project1a_with_error_paired_reads.fasta -o predictions.txt 
+python project1b.py -g project1b_s_reference_genome.fasta -r project1b-s_with_error_paired_reads.fasta -o predictions.txt

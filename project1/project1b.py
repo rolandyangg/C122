@@ -1,14 +1,11 @@
-# Roland Yang
-# 506053914
-# Jan 23, 9:43:03 PM
-# freaking codalab is down and i cant test my submissions
-
 from parse import *
-from collections import Counter, defaultdict
+from collections import defaultdict
 from tqdm import tqdm
+import argparse
+import os
 
 # Dynamic programming method
-def editDistanceWithOperations(a, b, cp):
+def edit_distance(a, b, offset):
     m, n = len(a), len(b)
     # Create the DP table
     dp = [[0] * (n + 1) for _ in range(m + 1)]
@@ -45,14 +42,14 @@ def editDistanceWithOperations(a, b, cp):
             i -= 1
             j -= 1
         elif operations[i][j] == "S":  # Substitution
-            mutations.append(("S", i-1 + cp, f"{b[j-1]} {a[i-1]}"))
+            mutations.append(("S", i-1 + offset, f"{b[j-1]} {a[i-1]}"))
             i -= 1
             j -= 1
         elif operations[i][j] == "I":  # Insertion
-            mutations.append(("I", i-1 + cp, f"{a[i-1]}"))
+            mutations.append(("I", i-1 + offset, f"{a[i-1]}"))
             i -= 1
         elif operations[i][j] == "D":  # Deletion
-            mutations.append(("D", j-1 + cp, f"{b[j-1]}"))
+            mutations.append(("D", j-1 + offset, f"{b[j-1]}"))
             j -= 1
     
     return dp[m][n], mutations[::-1]  # Return edit distance and mutations
@@ -73,14 +70,16 @@ def divide_into_kmers(read, k=15):
 def get_candidate_positions(read, kmer_dict, k=15):
     kmers = divide_into_kmers(read, k)
     candidate_positions = []
-    for i in tqdm(range(len(kmers))):
+    for i in range(len(kmers)):
         if kmers[i] in kmer_dict:
             candidate_positions.append((kmer_dict[kmers[i]][0], i))
     return candidate_positions
 
-def solution(reference_genome, reads):
+def main(reference_genome, reads, output_file):
+    print("Building kmer dictionary...")
     kmer_dict = build_kmer_dict(reference_genome)
     total_mutations = {}
+    print("Identifying mutations...")
     for read in tqdm(reads):
         # Divide kmer of size 50 into 3 pieces of size 15
         spots = get_candidate_positions(read, kmer_dict)
@@ -88,7 +87,7 @@ def solution(reference_genome, reads):
         for i in range(len(spots)):
             start = spots[i][0] - spots[i][1] * 15
             reference_window = reference_genome[start:start + 50] # Get the aligned reference window
-            distance, mutations = editDistanceWithOperations(read, reference_window, start) # Dyanmic Programming on aligned read
+            distance, mutations = edit_distance(read, reference_window, start) # Dyanmic Programming on aligned read
             temp.append((distance, mutations))
         
         # Choose the best scoring window
@@ -116,17 +115,32 @@ def solution(reference_genome, reads):
         output += f">{prediction[0]}{prediction[1]} {prediction[2]}\n"
 
     # Output
-    with open("output/1b/predictions.txt", "w") as file:
+    with open(output_file, "w") as file:
         file.write(output)
     print(output)
-
-def main():
-    reference_genome = parse_ref_file("data/project1b-b_reference_genome.fasta")
-    reads = parse_fasta("data/project1b-b_with_error_paired_reads.fasta")
-    # reference_genome = parse_ref_file("data/sample_reference_genome.fasta")
-    # reads = parse_fasta("data/sample_with_error_paired_reads.fasta")
-
-    solution(reference_genome, reads)
+    print(f"Successfully outputted to {output_file}")
 
 if __name__ == "__main__":
-    main()
+    # Handle CLI
+    parser = argparse.ArgumentParser(description="Project 1B Solution")
+    parser.add_argument("-g", "--genome", required=True, dest="genome", help="Reference genome file path")
+    parser.add_argument("-r", "--reads", required=True, dest="reads", help="Reads file path")
+    parser.add_argument("-o", "--output", required=True, dest="output", help="Output file path (should be a txt)")
+
+    args = parser.parse_args()
+    reference_genome_file = args.genome
+    reads_file = args.reads
+    output_file = args.output
+
+    if not os.path.exists(reference_genome_file):
+        print("Reference genome file does not exist")
+        exit(1)
+    
+    if not os.path.exists(reads_file):
+        print("Reads file does not exist")
+        exit(1)
+
+    reference_genome = parse_reference_genome(reference_genome_file)
+    reads = parse_reads(reads_file)
+
+    main(reference_genome, reads, output_file)
