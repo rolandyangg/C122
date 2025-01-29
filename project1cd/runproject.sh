@@ -1,1 +1,1 @@
-python project1c.py -i project1c -o predictions.txt -N 100
+python project1d.py -i project1d-filtered -o predictions.txt -N 49
