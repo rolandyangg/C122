@@ -5,3 +5,8 @@ project1ab/__pycache__
 project1cd/data
 project1cd/output
 project1cd/__pycache__
+project2a/data
+project2a/output
+project2a/__pycache__
+__pycache__
+.DS_Store

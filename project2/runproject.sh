@@ -1,0 +1,1 @@
+python project2a.py -i project2a_spectrum.fasta -o predictions.txt
