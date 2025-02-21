@@ -122,8 +122,7 @@ def main(reads, output_file):
     print("Building De Bruijn Graph...")
     graph = build_de_bruijn(spectrum)
 
-    path = find_eulerian(graph)
-    # print(path)
+    path = list(find_eulerian(graph))
 
     genome = path[0] + "".join(node[-1] for node in path[1:])
 
