@@ -1,1 +1,1 @@
-python project2a.py -i project2a_spectrum.fasta -o predictions.txt
+python project2b.py -i project2b_reads.fasta -o predictions.txt

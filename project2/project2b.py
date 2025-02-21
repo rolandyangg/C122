@@ -1,5 +1,5 @@
 from parse import *
-from collections import defaultdict, deque
+from collections import defaultdict, deque, Counter
 from tqdm import tqdm
 import argparse
 import os
@@ -40,6 +40,45 @@ def find_eulerian(graph):
     
     return path
 
+def eulerian_path(graph):
+    # compute the in/out degrees for each node
+    indegrees, outdegrees = defaultdict(int), defaultdict(int)
+    for node, edges in graph.items():
+        outdegrees[node] += len(edges)
+        for e in edges:
+            indegrees[e] += 1 
+            
+    # find start node with in/out degrees
+    all_nodes = set(indegrees.keys()).union(outdegrees.keys())
+    start = None
+    for node in all_nodes:
+        if outdegrees[node] > indegrees[node]:
+            start = node
+            break
+    
+    if not start:
+        start = next(iter(graph))
+    
+    # find the path using a stack approach
+    # need to reverse the stack to get the correct path
+    stack, path = [], []
+    curr = start
+    
+    # traverse the entire graph
+    while stack or graph.get(curr, []):
+        # if node is fully explored, append node to path + explore next node
+        if not graph.get(curr, []):
+            path.append(curr)
+            curr = stack.pop()
+        # otherwise, explore the neighbor of the current node
+        else:
+            stack.append(curr)
+            curr = graph[curr].pop()
+    path.append(curr)
+    
+    # return the path in reverse order (correct order)
+    return path[::-1]
+
 # Dynamic programming method
 def edit_distance(a, b):
     m, n = len(a), len(b)
@@ -73,7 +112,7 @@ def edit_distance(a, b):
     return dp[m][n] # Return edit distance
 
 # Sliding Window to build kmer dictionary
-def build_kmer_dict(genome, k=15):
+def build_kmer_dict(genome, k=12):
     kmer_dict = defaultdict(list)
     for i in tqdm(range(len(genome) - k + 1)):
         kmer = genome[i:i+k]
@@ -81,42 +120,67 @@ def build_kmer_dict(genome, k=15):
     return kmer_dict
 
 # Process reads and divide into kmers
-def divide_into_kmers(read, k=15):
+def divide_into_kmers(read, k=12):
     return [read[i:i+k] for i in range(0, len(read) - k + 1, k)]
 
 # Get candidate positions for reads
-def get_candidate_positions(read, kmer_dict, k=15):
+def get_candidate_positions(read, kmer_dict, k=12):
     kmers = divide_into_kmers(read, k)
     candidate_positions = []
     for i in range(len(kmers)):
         if kmers[i] in kmer_dict:
             candidate_positions.append((kmer_dict[kmers[i]][0], i))
+    # print(candidate_positions)
     return candidate_positions
 
-def main(spectrum, output_file):
+######################################################
+
+def generate_spectrum(reads, k=12, threshold=3):
+    kmer_freq = Counter()
+
+    for read in reads:
+        for i in range(len(read) - k + 1):
+            kmer = read[i:i + k]
+            kmer_freq[kmer] += 1
+    
+    spectrum = []
+    for kmer, count in kmer_freq.items():
+        if count > threshold:
+            spectrum.append(kmer)
+
+    return spectrum
+
+######################################################
+
+def main(reads, output_file):
+    k = 12
+    threshold = 3
+
+    spectrum = generate_spectrum(reads, k, threshold)
+
     print("Building De Bruijn Graph...")
     graph = build_de_bruijn(spectrum)
 
-    print("Calculating Eulerian path...")
-    path = list(find_eulerian(graph))
+    path = eulerian_path(graph)
+    # print(path)
 
     genome = path[0] + "".join(node[-1] for node in path[1:])
 
     # Map the reads spectrum back to the genome
-    kmer_dict = build_kmer_dict(genome)
+    kmer_dict = build_kmer_dict(genome, k)
     read_to_positions = {}
     print("Mapping reads back to genome...")
     read_index = 0
-    for read in tqdm(spectrum):
-        # Divide kmer of size 50 into 3 pieces of size 15
-        spots = get_candidate_positions(read, kmer_dict)
+    for read in tqdm(reads):
+        # Divide kmer of size 50 into 3 pieces of size 12
+        spots = get_candidate_positions(read, kmer_dict, k)
         temp = []
         for i in range(len(spots)):
-            start = spots[i][0] - spots[i][1] * 15
+            start = spots[i][0] - spots[i][1] * k
             reference_window = genome[start:start + 50] # Get the aligned reference window
             distance = edit_distance(read, reference_window) # Dyanamic Programming on aligned read
             temp.append((distance, start))
-        
+
         # Choose the best scoring window
         if len(temp) > 0:
             best_position = min(temp, key=lambda x: x[0])[1]
@@ -128,7 +192,7 @@ def main(spectrum, output_file):
 
     # Sort
     res = sorted(read_to_positions.keys(), key=lambda x: read_to_positions[x])
-    
+
     # Format
     output = ""
     for r in res:
@@ -137,23 +201,23 @@ def main(spectrum, output_file):
     # Output
     with open(output_file, "w") as file:
         file.write(output)
-    print(output)
+    print(genome)
     print(f"Successfully outputted to {output_file}")
 
 if __name__ == "__main__":
     # Handle CLI
-    parser = argparse.ArgumentParser(description="Project 2a Solution")
-    parser.add_argument("-i", "--input", required=True, dest="input", help="Spectrum file path")
+    parser = argparse.ArgumentParser(description="Project 2b Solution")
+    parser.add_argument("-i", "--input", required=True, dest="input", help="Reads file path")
     parser.add_argument("-o", "--output", required=True, dest="output", help="Output file path (should be a txt)")
 
     args = parser.parse_args()
-    spectrum_file = args.input
+    reads_file = args.input
     output_file = args.output
 
-    if not os.path.exists(spectrum_file):
+    if not os.path.exists(reads_file):
         print("Spectrum file does not exist")
         exit(1)
 
-    spectrum = parse_reads(spectrum_file)
+    reads = parse_reads(reads_file)
 
-    main(spectrum, output_file)
+    main(reads, output_file)
