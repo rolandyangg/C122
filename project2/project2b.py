@@ -40,45 +40,6 @@ def find_eulerian(graph):
     
     return path
 
-def eulerian_path(graph):
-    # compute the in/out degrees for each node
-    indegrees, outdegrees = defaultdict(int), defaultdict(int)
-    for node, edges in graph.items():
-        outdegrees[node] += len(edges)
-        for e in edges:
-            indegrees[e] += 1 
-            
-    # find start node with in/out degrees
-    all_nodes = set(indegrees.keys()).union(outdegrees.keys())
-    start = None
-    for node in all_nodes:
-        if outdegrees[node] > indegrees[node]:
-            start = node
-            break
-    
-    if not start:
-        start = next(iter(graph))
-    
-    # find the path using a stack approach
-    # need to reverse the stack to get the correct path
-    stack, path = [], []
-    curr = start
-    
-    # traverse the entire graph
-    while stack or graph.get(curr, []):
-        # if node is fully explored, append node to path + explore next node
-        if not graph.get(curr, []):
-            path.append(curr)
-            curr = stack.pop()
-        # otherwise, explore the neighbor of the current node
-        else:
-            stack.append(curr)
-            curr = graph[curr].pop()
-    path.append(curr)
-    
-    # return the path in reverse order (correct order)
-    return path[::-1]
-
 # Dynamic programming method
 def edit_distance(a, b):
     m, n = len(a), len(b)
@@ -161,7 +122,7 @@ def main(reads, output_file):
     print("Building De Bruijn Graph...")
     graph = build_de_bruijn(spectrum)
 
-    path = eulerian_path(graph)
+    path = find_eulerian(graph)
     # print(path)
 
     genome = path[0] + "".join(node[-1] for node in path[1:])
