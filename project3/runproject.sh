@@ -1,0 +1,1 @@
+python project3a.py -s boundcentered.fasta -i boundrandomoffset.fasta -o predictions.txt
