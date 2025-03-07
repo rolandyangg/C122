@@ -11,7 +11,7 @@ python project3a.py -s [pwm-sequences-filepath] -i [input-filepath] -o [output-f
 ```
 
 - -s, --sequences: The input sequences to build the PWM on
-- -i, --input: The input data to identify peaks on using the PWM
+- -i, --input: The input data to identify peaks/top-scores on using the PWM
 - -o, --output: The output filepath, should be a .txt file
 
 ## Project 3a
@@ -27,3 +27,15 @@ Overall: 5730/10227
 Generates a PWM using the EM (Expectation-Maximum) Algorithm for de novo motif discovery. Found acceptable results using a kmer size of 20 and running the algorithm for 100 iterations.
 
 Used the PWM generated to calculate the most probable kmer in each sequence in the second set of sequences, then found the index of where that kmer first appears in each of the sequences.
+
+## Project 3b
+
+Given a set of sequences where the motif is likely centered towards the middle, each 201bp, predicts the top 6000 sequences actually bound by the transcription factor.
+
+### Score
+
+Overall: 2341/6000
+
+### Implementation
+
+Same implementation as 3a, except instead takes the score of the most probable kmer in each sequence and sorts them to find the top 6000.
