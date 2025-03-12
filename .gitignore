@@ -10,5 +10,7 @@ project2/output
 project2/__pycache__
 project3/data
 project3/output
+project4/data
+project4/output
 __pycache__
 .DS_Store
