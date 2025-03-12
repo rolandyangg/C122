@@ -1,3 +1,3 @@
-# CS C122 UCLA Winter 2025
+My work for UCLA's CS122 (Algorithms in Computational Genomics) in Winter Quarter 2025.
 
-Roland's C122 Work.
+All projects and assignments received full credit for the undergraduate thresholds.
